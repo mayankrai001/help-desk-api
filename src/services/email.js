@@ -21,8 +21,6 @@ transporter.verify(function (error, success) {
 });
 
 const sendEmail = async (to, subject, html) => {
-  console.log("Email User:", process.env.EMAIL_USER);
-  console.log("Email Pass:", process.env.EMAIL_PASS ? "Defined" : "Undefined");
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to,

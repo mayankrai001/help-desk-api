@@ -6,12 +6,14 @@ const {
   ticketStatusUpdatedTemplate,
 } = require("../utils/emailTemplate");
 
-const createTicketService = async (payload, userId) => {
+const createTicketService = async (payload, userId, organizationId) => {
   const ticketId = generateTicketId();
 
   const ticket = await Ticket.create({
     ticketId,
     userId,
+    organizationId,
+    userEmail: payload.userEmail,
     category: payload.category,
     priority: payload.priority,
     description: payload.description,
@@ -26,40 +28,44 @@ const createTicketService = async (payload, userId) => {
   return ticket;
 };
 
-const getUserTicketsService = async (userId) => {
-  const tickets = await Ticket.find({ userId }).sort({ createdAt: -1 });
+const getUserTicketsService = async (userId, organizationId) => {
+  const tickets = await Ticket.find({ userId, organizationId }).sort({
+    createdAt: -1,
+  });
 
   return tickets;
 };
 
-const getAllTicketsService = async () => {
-  const tickets = await Ticket.find()
+const getAllTicketsService = async (organizationId) => {
+  const tickets = await Ticket.find({ organizationId })
     .populate("userId", "name email")
     .sort({ createdAt: -1 });
 
   return tickets;
 };
 
-const updateTicketStatusService = async (ticketId, status) => {
-  const ticket = await Ticket.findByIdAndUpdate(
-    ticketId,
-    { status },
-    { new: true },
-  );
+const updateTicketStatusService = async (ticketId, status, organizationId) => {
+  const ticket = await Ticket.findOne({
+    _id: ticketId,
+    organizationId,
+  });
 
   if (!ticket) {
     throw new Error("Ticket not found");
   }
 
+  ticket.status = status;
+  await ticket.save();
+
   const html = ticketStatusUpdatedTemplate(ticket);
 
   await sendEmail(
-    ticket.userId.email,
+    ticket.userEmail,
     `Ticket Status Updated - ${ticket.ticketId}`,
     html,
   );
 
-  return ticket;
+  return ticket.populate("userId", "name email");
 };
 
 module.exports = {

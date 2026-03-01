@@ -7,9 +7,19 @@ const ticketSchema = new mongoose.Schema(
       required: true,
     },
 
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Organization",
+      required: true,
+    },
+
     userId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+
+    userEmail: {
+      type: String,
     },
 
     category: {
