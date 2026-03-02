@@ -26,10 +26,10 @@ transporter.verify(function (error, success) {
 const sendEmail = async (to, subject, html) => {
   await transporter.sendMail({
     from: process.env.EMAIL_USER,
-    to,
-    subject,
-    html,
-  });
+      to,
+      subject,
+      html,
+    });
 };
 
 module.exports = {

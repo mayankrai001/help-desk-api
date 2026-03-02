@@ -20,11 +20,11 @@ const createTicketService = async (payload, userId, organizationId) => {
   });
   const html = ticketCreatedTemplate(ticket);
 
-  await sendEmail(
-    process.env.ADMIN_EMAIL,
-    `New Ticket Raised - ${ticket.ticketId}`,
-    html,
-  );
+  // await sendEmail(
+  //   process.env.ADMIN_EMAIL,
+  //   `New Ticket Raised - ${ticket.ticketId}`,
+  //   html,
+  // );
   return ticket;
 };
 
@@ -59,11 +59,11 @@ const updateTicketStatusService = async (ticketId, status, organizationId) => {
 
   const html = ticketStatusUpdatedTemplate(ticket);
 
-  await sendEmail(
-    ticket.userEmail,
-    `Ticket Status Updated - ${ticket.ticketId}`,
-    html,
-  );
+  // await sendEmail(
+  //   ticket.userEmail,
+  //   `Ticket Status Updated - ${ticket.ticketId}`,
+  //   html,
+  // );
 
   return ticket.populate("userId", "name email");
 };
