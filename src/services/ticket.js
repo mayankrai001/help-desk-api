@@ -20,11 +20,15 @@ const createTicketService = async (payload, userId, organizationId) => {
   });
   const html = ticketCreatedTemplate(ticket);
 
-  // await sendEmail(
-  //   process.env.ADMIN_EMAIL,
-  //   `New Ticket Raised - ${ticket.ticketId}`,
-  //   html,
-  // );
+  try {
+    await sendEmail(
+      process.env.ADMIN_EMAIL,
+      `New Ticket Raised - ${ticket.ticketId}`,
+      html,
+    );
+  } catch (error) {
+    console.error("Email failed:", error.message);
+  }
   return ticket;
 };
 
@@ -59,11 +63,15 @@ const updateTicketStatusService = async (ticketId, status, organizationId) => {
 
   const html = ticketStatusUpdatedTemplate(ticket);
 
-  // await sendEmail(
-  //   ticket.userEmail,
-  //   `Ticket Status Updated - ${ticket.ticketId}`,
-  //   html,
-  // );
+  try {
+    await sendEmail(
+      ticket.userEmail,
+      `Ticket Status Updated - ${ticket.ticketId}`,
+      html,
+    );
+  } catch (error) {
+    console.error("Email failed:", error.message);
+  }
 
   return ticket.populate("userId", "name email");
 };
