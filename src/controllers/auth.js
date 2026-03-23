@@ -36,8 +36,6 @@ const microsoftLogin = async (req, res) => {
 
     const scope = "User.Read Organization.Read.All openid profile email";
 
-    console.log("++++++++++ redirect uri ++++++++++++++", redirectUri);
-
     const loginUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&response_mode=query&scope=${encodeURIComponent(scope)}`;
 
     res.redirect(loginUrl);
@@ -62,8 +60,6 @@ const microsoftCallback = async (req, res) => {
 
     const encodedUser = encodeURIComponent(JSON.stringify(user));
     const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:8080";
-
-    console.log("++++++++++ frontendBaseURl ++++++++++++", frontendBaseUrl);
 
     const frontendUrl = `${frontendBaseUrl}/auth/microsoft/callback?token=${token}&user=${encodedUser}`;
     return res.redirect(frontendUrl);
