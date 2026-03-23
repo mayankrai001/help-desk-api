@@ -13,9 +13,17 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
 
+    microsoftId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.microsoftId;
+      },
     },
 
     organizationId: {

@@ -20,6 +20,13 @@ const createTicketService = async (payload, userId, organizationId) => {
   });
   const html = ticketCreatedTemplate(ticket);
 
+  // await resend.emails.send({
+  //   from: "Support <support@swarajconsultancy.in>",
+  //   to: "mayankrai627@gmail.com",
+  //   subject: "Test Email",
+  //   html: "<h1>Test</h1>",
+  // });
+
   try {
     await sendEmail(
       process.env.ADMIN_EMAIL,
