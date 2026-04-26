@@ -1,10 +1,12 @@
 const dotenv = require("dotenv");
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const connectDB = require("./src/config/db");
 const authRoutes = require("./src/routes/auth");
 const ticketRoutes = require("./src/routes/ticket");
 const issueCategoryRoutes = require("./src/routes/issueCategory");
+const subAdminRoutes = require("./src/routes/subAdmin");
 
 dotenv.config();
 
@@ -33,9 +35,11 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser());
 app.use("/auth", authRoutes);
 app.use("/tickets", ticketRoutes);
 app.use("/categories", issueCategoryRoutes);
+app.use("/sub-admins", subAdminRoutes);
 
 app.get("/", (req, res) => {
   res.send("Ticketing API Running");

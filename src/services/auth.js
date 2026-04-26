@@ -1,8 +1,37 @@
 const User = require("../models/user.js");
+const SubAdmin = require("../models/subAdmin.js");
 const Organization = require("../models/organization.js");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
+const jwksClient = require("jwks-rsa");
+
+const client = jwksClient({
+  jwksUri: "https://login.microsoftonline.com/common/discovery/v2.0/keys",
+});
+
+function getKey(header, callback) {
+  client.getSigningKey(header.kid, function (err, key) {
+    if (err) {
+      return callback(err);
+    }
+    const signingKey = key.publicKey || key.rsaPublicKey;
+    callback(null, signingKey);
+  });
+}
+
+/**
+ * Check whether an email belongs to a sub-admin.
+ * If yes, the JWT role should be elevated to "admin" at login time
+ * without permanently altering the User document's role field.
+ */
+const resolveRole = async (userRole, email) => {
+  if (userRole === "admin") return "admin";
+  const isSubAdmin = await SubAdmin.findOne({
+    email: email.toLowerCase().trim(),
+  });
+  return isSubAdmin ? "admin" : userRole;
+};
 
 const signupService = async (payload) => {
   const { name, email, password, companyName } = payload;
@@ -31,10 +60,12 @@ const signupService = async (payload) => {
     organizationId: organization._id,
   });
 
+  const role = await resolveRole(user.role, user.email);
+
   const token = jwt.sign(
     {
       id: user._id,
-      role: user.role,
+      role,
       organizationId: user.organizationId._id.toString(),
     },
     process.env.JWT_SECRET,
@@ -48,7 +79,7 @@ const signupService = async (payload) => {
       name: user.name,
       organizationId: user.organizationId._id,
       organizationName: user.organizationId.name,
-      role: user.role,
+      role,
     },
   };
 };
@@ -74,10 +105,13 @@ const loginService = async (payload) => {
     throw new Error("Invalid credentials");
   }
 
+  // Elevate role if email is in the SubAdmin collection
+  const role = await resolveRole(user.role, user.email);
+
   const token = jwt.sign(
     {
       id: user._id,
-      role: user.role,
+      role,
       organizationId: user.organizationId._id.toString(),
     },
     process.env.JWT_SECRET,
@@ -91,7 +125,7 @@ const loginService = async (payload) => {
       name: user.name,
       organizationId: user.organizationId._id,
       organizationName: user.organizationId.name,
-      role: user.role,
+      role,
     },
   };
 };
@@ -182,10 +216,13 @@ const microsoftAuthService = async (code) => {
     );
   }
 
+  // Elevate role if email is in the SubAdmin collection
+  const role = await resolveRole(user.role, user.email);
+
   const token = jwt.sign(
     {
       id: user._id,
-      role: user.role,
+      role,
       organizationId: user.organizationId._id
         ? user.organizationId._id.toString()
         : user.organizationId.toString(),
@@ -201,13 +238,89 @@ const microsoftAuthService = async (code) => {
       name: user.name,
       organizationId: user.organizationId._id || user.organizationId,
       organizationName: user.organizationId.name || organization.name,
-      role: user.role,
+      role,
     },
   };
+};
+
+const teamsSSOService = async (teamsToken) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(
+      teamsToken,
+      getKey,
+      {
+        audience: process.env.MS_CLIENT_ID,
+      },
+      async (err, decoded) => {
+        if (err) {
+          return reject(new Error("Invalid Teams token: " + err.message));
+        }
+
+        const { name, preferred_username, oid } = decoded;
+        const email = preferred_username || decoded.email;
+
+        // Find or create user
+        let user = await User.findOne({
+          $or: [{ microsoftId: oid }, { email: email }],
+        }).populate("organizationId", "name");
+
+        if (!user) {
+          let companyName = "Microsoft Teams Org";
+          const escapedName = companyName
+            .trim()
+            .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+          let organization = await Organization.findOne({
+            name: { $regex: new RegExp(`^${escapedName}$`, "i") },
+          });
+          if (!organization) {
+            organization = await Organization.create({
+              name: companyName.trim(),
+            });
+          }
+
+          user = await User.create({
+            name: name || email.split("@")[0],
+            email: email,
+            microsoftId: oid,
+            organizationId: organization._id,
+          });
+          user.organizationId = organization;
+        } else if (!user.microsoftId) {
+          user.microsoftId = oid;
+          await user.save();
+        }
+
+        // Elevate role if email is in the SubAdmin collection
+        const role = await resolveRole(user.role, user.email);
+
+        const internalToken = jwt.sign(
+          {
+            id: user._id,
+            role,
+            organizationId: user.organizationId._id.toString(),
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: "1d" },
+        );
+
+        resolve({
+          token: internalToken,
+          user: {
+            email: user.email,
+            name: user.name,
+            organizationId: user.organizationId._id,
+            organizationName: user.organizationId.name,
+            role,
+          },
+        });
+      },
+    );
+  });
 };
 
 module.exports = {
   signupService,
   loginService,
   microsoftAuthService,
+  teamsSSOService,
 };

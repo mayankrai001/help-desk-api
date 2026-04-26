@@ -3,6 +3,7 @@ const {
   getUserTicketsService,
   getAllTicketsService,
   updateTicketStatusService,
+  delegateTicketService,
 } = require("../services/ticket");
 
 const {
@@ -90,9 +91,36 @@ const updateTicketStatus = async (req, res) => {
   }
 };
 
+const delegateTicket = async (req, res) => {
+  try {
+    const organizationId = req.user.organizationId;
+    if (!organizationId) {
+      return errorResponse(
+        res,
+        "Session invalid. Please log in again.",
+        401,
+      );
+    }
+    const { email } = req.body;
+    if (!email) {
+       return errorResponse(res, "Email is required to delegate ticket.", 400);
+    }
+    const ticket = await delegateTicketService(
+      req.params.id,
+      email,
+      organizationId,
+    );
+
+    return successResponse(res, ticket, "Ticket delegated successfully");
+  } catch (error) {
+    return errorResponse(res, error.message);
+  }
+};
+
 module.exports = {
   createTicket,
   getMyTickets,
   getAllTickets,
   updateTicketStatus,
+  delegateTicket,
 };

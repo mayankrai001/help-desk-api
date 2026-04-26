@@ -22,7 +22,19 @@ const ticketSchema = new mongoose.Schema(
       type: String,
     },
 
+    assignedToEmail: {
+      type: String,
+    },
+
+    assignedToName: {
+      type: String,
+    },
+
     category: {
+      type: String,
+    },
+
+    subCategory: {
       type: String,
     },
 

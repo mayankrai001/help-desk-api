@@ -2,16 +2,28 @@ const {
   signupService,
   loginService,
   microsoftAuthService,
+  teamsSSOService,
 } = require("../services/auth");
 const {
   successResponse,
   errorResponse,
 } = require("../middlewares/responseHandler");
 
+// Helper to set cookie
+const setTokenCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production", // true in prod (requires HTTPS)
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 'none' for cross-site in prod
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
+};
+
 const signup = async (req, res) => {
   try {
-    const user = await signupService(req.body);
-    return successResponse(res, user, "User registered successfully", 200);
+    const data = await signupService(req.body);
+    setTokenCookie(res, data.token);
+    return successResponse(res, { user: data.user }, "User registered successfully", 200);
   } catch (error) {
     return errorResponse(res, error.message, 400);
   }
@@ -20,7 +32,8 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
   try {
     const data = await loginService(req.body);
-    return successResponse(res, data, "Login successful");
+    setTokenCookie(res, data.token);
+    return successResponse(res, { user: data.user }, "Login successful");
   } catch (error) {
     return errorResponse(res, error.message, 401);
   }
@@ -61,7 +74,8 @@ const microsoftCallback = async (req, res) => {
     const encodedUser = encodeURIComponent(JSON.stringify(user));
     const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:8080";
 
-    const frontendUrl = `${frontendBaseUrl}/auth/microsoft/callback?token=${token}&user=${encodedUser}`;
+    setTokenCookie(res, token);
+    const frontendUrl = `${frontendBaseUrl}/auth/microsoft/callback?user=${encodedUser}`;
     return res.redirect(frontendUrl);
   } catch (error) {
     const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:8080";
@@ -71,9 +85,64 @@ const microsoftCallback = async (req, res) => {
   }
 };
 
+const teamsSSO = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return errorResponse(res, "Teams token not provided", 400);
+    }
+
+    const data = await teamsSSOService(token);
+    setTokenCookie(res, data.token);
+    return successResponse(res, { user: data.user }, "Teams SSO successful");
+  } catch (error) {
+    return errorResponse(res, error.message, 401);
+  }
+};
+
+const logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  });
+  return successResponse(res, null, "Logged out successfully");
+};
+
+const getMe = async (req, res) => {
+  try {
+    // req.user is populated by authMiddleware
+    // We just need to return the user info. 
+    // Ideally fetch fresh from DB, but token data is fine for basic check.
+    const User = require("../models/user");
+    const user = await User.findById(req.user.id).populate("organizationId", "name");
+    
+    if (!user) {
+      return errorResponse(res, "User not found", 404);
+    }
+    
+    const { resolveRole } = require("../services/auth"); // Assuming this is exported or we can just use req.user.role if it's already resolved in middleware
+    
+    return successResponse(res, {
+      user: {
+        email: user.email,
+        name: user.name,
+        organizationId: user.organizationId._id,
+        organizationName: user.organizationId.name,
+        role: req.user.role, // from token
+      }
+    });
+  } catch (error) {
+    return errorResponse(res, error.message, 500);
+  }
+};
+
 module.exports = {
   signup,
   login,
   microsoftLogin,
   microsoftCallback,
+  teamsSSO,
+  logout,
+  getMe,
 };

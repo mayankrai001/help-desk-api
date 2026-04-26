@@ -9,6 +9,7 @@ const {
   getMyTickets,
   getAllTickets,
   updateTicketStatus,
+  delegateTicket,
 } = require("../controllers/ticket");
 
 router.post("/", authMiddleware, createTicket);
@@ -22,6 +23,13 @@ router.patch(
   authMiddleware,
   adminMiddleware,
   updateTicketStatus,
+);
+
+router.patch(
+  "/admin/:id/delegate",
+  authMiddleware,
+  adminMiddleware,
+  delegateTicket,
 );
 
 module.exports = router;

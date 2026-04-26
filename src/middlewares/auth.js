@@ -3,13 +3,16 @@ const { errorResponse } = require("./responseHandler");
 
 const authMiddleware = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token = req.cookies.token;
 
-    if (!authHeader) {
-      return errorResponse(res, "Authorization token missing", 401);
+    // Fallback to Authorization header if no cookie (e.g. for API testing)
+    if (!token && req.headers.authorization) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
-    const token = authHeader.split(" ")[1];
+    if (!token) {
+      return errorResponse(res, "Authorization token missing", 401);
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
