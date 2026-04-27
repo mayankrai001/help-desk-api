@@ -6,13 +6,13 @@
  *   ROUTING_MAP[category][priority] = recipientEmail
  *
  * Categories (case-insensitive match applied in getRoutingEmail):
- *   Hardware | Salesforce | SharePoint | Business Central | Application | VPN | System Issue
+ *   	Hardware Issue | Salesforce | SharePoint | Business Central | Application | VPN | System Issue
  *
  * Priorities: High | Medium | Low
  */
 
 const ROUTING_MAP = {
-  hardware: {
+  "hardware issue": {
     high: "satish.malusare@cleantechsolar.com",
     medium: "niraj.raut@cleantechsolar.com",
     low: "jasper.chan@cleantechsolar.com",
@@ -60,7 +60,10 @@ const getRoutingEmail = (category, priority) => {
 
   const cat = category.toLowerCase().trim();
   // Critical is treated as High for routing purposes
-  const pri = priority.toLowerCase() === "critical" ? "high" : priority.toLowerCase().trim();
+  const pri =
+    priority.toLowerCase() === "critical"
+      ? "high"
+      : priority.toLowerCase().trim();
 
   const categoryMap = ROUTING_MAP[cat];
   if (!categoryMap) {
@@ -70,7 +73,9 @@ const getRoutingEmail = (category, priority) => {
 
   const email = categoryMap[pri];
   if (!email) {
-    console.warn(`[emailRouting] No routing found for category: "${category}", priority: "${priority}"`);
+    console.warn(
+      `[emailRouting] No routing found for category: "${category}", priority: "${priority}"`,
+    );
     return null;
   }
 
