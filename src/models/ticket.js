@@ -52,6 +52,10 @@ const ticketSchema = new mongoose.Schema(
       enum: ["Received", "In Progress", "Completed"],
       default: "Received",
     },
+
+    department: {
+      type: String,
+    },
   },
   { timestamps: true },
 );

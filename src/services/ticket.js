@@ -38,6 +38,7 @@ const createTicketService = async (payload, userId, organizationId) => {
     subCategory: payload.subCategory || undefined,
     priority: payload.priority,
     description: payload.description,
+    department: payload.department,
     assignedToEmail: specialistEmail || ITSUPPORT_EMAIL,
     assignedToName: assignedToName,
   });

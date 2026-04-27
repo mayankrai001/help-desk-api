@@ -47,6 +47,11 @@ const ROUTING_MAP = {
     medium: "niraj.raut@cleantechsolar.com",
     low: "jasper.chan@cleantechsolar.com",
   },
+  "power bi": {
+    high: "sameer.mishra@cleantechsolar.com",
+    medium: "nutchaphon.p@cleantechsolar.com",
+    low: "nutchaphon.p@cleantechsolar.com",
+  },
 };
 
 /**
