@@ -95,13 +95,27 @@ const getAllTicketsService = async (organizationId) => {
   return tickets;
 };
 
-const getTicketsByDateRangeService = async (organizationId, startDate, endDate) => {
-  const query = { organizationId };
+const getTicketsByDateRangeService = async (
+  organizationId,
+  startDate,
+  endDate,
+) => {
+  const mongoose = require("mongoose");
+  const query = {
+    organizationId: new mongoose.Types.ObjectId(organizationId),
+  };
 
   if (startDate || endDate) {
     query.createdAt = {};
     if (startDate) query.createdAt.$gte = new Date(startDate);
-    if (endDate) query.createdAt.$lte = new Date(endDate);
+    if (endDate) {
+      const end = new Date(endDate);
+      // If it's just a date (like YYYY-MM-DD), set to end of day
+      if (endDate.length <= 10) {
+        end.setHours(23, 59, 59, 999);
+      }
+      query.createdAt.$lte = end;
+    }
   }
 
   const tickets = await Ticket.find(query)

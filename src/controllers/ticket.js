@@ -26,10 +26,6 @@ const exportTicketsCSV = async (req, res) => {
       endDate,
     );
 
-    if (!tickets || tickets.length === 0) {
-      return errorResponse(res, "No tickets found for the selected range", 404);
-    }
-
     // Define CSV headers
     const headers = [
       "Ticket ID",
