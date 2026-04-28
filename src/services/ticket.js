@@ -11,20 +11,25 @@ const User = require("../models/user");
 const SubAdmin = require("../models/subAdmin");
 
 // Always-notify admin inbox
-const ITSUPPORT_EMAIL = process.env.ITSUPPORT_EMAIL || "itsupport@cleantechsolar.com";
+const ITSUPPORT_EMAIL =
+  process.env.ITSUPPORT_EMAIL || "itsupport@cleantechsolar.com";
 
 const createTicketService = async (payload, userId, organizationId) => {
   const ticketId = generateTicketId();
 
   const specialistEmail = getRoutingEmail(payload.category, payload.priority);
-  
+
   let assignedToName = "Unassigned";
   if (specialistEmail) {
-    const adminUser = await User.findOne({ email: specialistEmail.toLowerCase() });
+    const adminUser = await User.findOne({
+      email: specialistEmail.toLowerCase(),
+    });
     if (adminUser) {
       assignedToName = adminUser.name;
     } else {
-      const subAdmin = await SubAdmin.findOne({ email: specialistEmail.toLowerCase() });
+      const subAdmin = await SubAdmin.findOne({
+        email: specialistEmail.toLowerCase(),
+      });
       if (subAdmin && subAdmin.name) assignedToName = subAdmin.name;
     }
   }
@@ -39,6 +44,7 @@ const createTicketService = async (payload, userId, organizationId) => {
     priority: payload.priority,
     description: payload.description,
     department: payload.department,
+    country: payload.country,
     assignedToEmail: specialistEmail || ITSUPPORT_EMAIL,
     assignedToName: assignedToName,
   });
