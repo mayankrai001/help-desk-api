@@ -95,6 +95,22 @@ const getAllTicketsService = async (organizationId) => {
   return tickets;
 };
 
+const getTicketsByDateRangeService = async (organizationId, startDate, endDate) => {
+  const query = { organizationId };
+
+  if (startDate || endDate) {
+    query.createdAt = {};
+    if (startDate) query.createdAt.$gte = new Date(startDate);
+    if (endDate) query.createdAt.$lte = new Date(endDate);
+  }
+
+  const tickets = await Ticket.find(query)
+    .populate("userId", "name email")
+    .sort({ createdAt: -1 });
+
+  return tickets;
+};
+
 const updateTicketStatusService = async (ticketId, status, organizationId) => {
   const ticket = await Ticket.findOne({
     _id: ticketId,
@@ -169,4 +185,5 @@ module.exports = {
   getAllTicketsService,
   updateTicketStatusService,
   delegateTicketService,
+  getTicketsByDateRangeService,
 };

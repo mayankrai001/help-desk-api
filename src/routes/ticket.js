@@ -10,12 +10,14 @@ const {
   getAllTickets,
   updateTicketStatus,
   delegateTicket,
+  exportTicketsCSV,
 } = require("../controllers/ticket");
 
 router.post("/", authMiddleware, createTicket);
 
 router.get("/my", authMiddleware, getMyTickets);
 
+router.get("/admin/export", authMiddleware, adminMiddleware, exportTicketsCSV);
 router.get("/admin", authMiddleware, adminMiddleware, getAllTickets);
 
 router.patch(

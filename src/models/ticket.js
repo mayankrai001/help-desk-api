@@ -44,7 +44,7 @@ const ticketSchema = new mongoose.Schema(
 
     priority: {
       type: String,
-      enum: ["Low", "Medium", "High", "Critical"],
+      enum: ["Low", "Medium", "High"],
     },
 
     description: {
@@ -53,7 +53,7 @@ const ticketSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["Received", "In Progress", "Completed"],
+      enum: ["Received", "In Progress", "Pending", "Completed"],
       default: "Received",
     },
 
