@@ -38,6 +38,10 @@ const ticketSchema = new mongoose.Schema(
       type: String,
     },
 
+    country: {
+      type: String,
+    },
+
     priority: {
       type: String,
       enum: ["Low", "Medium", "High", "Critical"],
